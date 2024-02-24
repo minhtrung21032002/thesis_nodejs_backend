@@ -5,13 +5,19 @@ const Step = require('../models/step');
 const Comment = require('../models/comment');
 const Step_Comment = require('../models/step_comment');
 const Guide = require('../models/guide');
+const path = require('path');
 
 class BlogController {
 
-    
-    // [GET] /guide/blog/:blog_id
-    async blog_page(req, res) {
 
+    // [GET] /guide/blog/:blog_id
+    // async blog_page(req, res) {
+    blog_page(req, res) {
+
+        const blogId = req.params.blog_id;
+        console.log(blogId)
+        // Render the blog-page handlebars template, passing the blogId as a context
+        res.sendFile(path.join(__dirname, '../resources/views', `blog_page.html`));
     }
 
 
@@ -157,7 +163,7 @@ class BlogController {
         if (!blog) {
             return res.status(404).json({ error: 'Blog not found' });
         }
-       
+
 
 
 
@@ -424,7 +430,13 @@ class BlogController {
         } catch (error) {
             console.log(error)
         }
-        res.json('okay')
+
+        const newBlog = await Blog.findById(blogId);
+        const responseData = {
+
+            blog_information: newBlog, // Include blog information
+        }
+        res.json(responseData)
 
 
     }
@@ -432,7 +444,7 @@ class BlogController {
 
     // [POST] /guide/blog/edit/intro/:blog_id
     async blog_page_edit2_update(req, res) {
-        
+
         console.log('blog_data_update')
         const introduction = req.body.blog_information.introduction;
         const time = req.body.blog_information.time;
@@ -446,14 +458,14 @@ class BlogController {
         const existingBlog = await Blog.findById(blogId);
 
         const currentDate = new Date();
-    
+
         existingBlog.last_updated = currentDate;
         await existingBlog.save();
-        
+
         // Update Blog model
         const updatedBlog = await Blog.findByIdAndUpdate(
             blogId,
-            { 
+            {
                 introduction: introduction || existingBlog.introduction,
                 time: time || existingBlog.time,
                 difficulty: difficulty || existingBlog.difficulty,
@@ -462,14 +474,14 @@ class BlogController {
             },
             { new: true } // Return the updated document
         );
-        
+
         // Find the existing guide
         const existingGuide = await Guide.findOne({ blog_id: blogId }); // Assuming 'blog_id' is the correct field name in the Guide model
-        
+
         // Update Guide model
         const updatedGuide = await Guide.findOneAndUpdate(
             { blog_id: blogId }, // Assuming 'blog_id' is the correct field name in the Guide model
-            { 
+            {
                 guide_title: guide_title || existingGuide.guide_title,
                 img_url: thumbnailImage || existingGuide.img_url // Assuming 'thumbnailImage' is the correct field name in the Guide model
             },
@@ -484,7 +496,7 @@ class BlogController {
     }
     // [GET] /guide/blog/edit/intro/api/:blog_id
     async blog_page_edit2_data(req, res) {
-     
+
         const blogId = req.params.blog_id;
         const guide = await Guide.findOne({ blog_id: blogId });
         // Query to find the blog by ID and populate the 'steps' field
@@ -648,6 +660,7 @@ class BlogController {
         const sortedStepsData = stepsData.sort((a, b) => a.step_number - b.step_number);
         // Construct the response JSON
         const responseData = {
+            blog_information: blog,
             steps: sortedStepsData.filter((step) => step !== null), // Remove null entries
         };
 

@@ -47,11 +47,13 @@ app.use(express.urlencoded({
 app.use(express.json())
 
 // Use Handlebars
+/*
 app.engine('handlebars', handlebars.engine())
 
 app.set('view engine','handlebars')
 
 app.set('views', path.join(__dirname, 'resources/views'));
+*/
 
 
 app.use(cors({

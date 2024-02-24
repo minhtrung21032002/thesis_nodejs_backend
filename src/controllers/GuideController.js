@@ -6,6 +6,7 @@ const Blog = require('../models/blog');
 const Badge = require('../models/badge')
 const Step = require('../models/step');
 const mongoose = require('mongoose');
+const { response } = require('express');
 class GuildController{
 
 
@@ -17,17 +18,23 @@ class GuildController{
     
     // [GET] /guide
     guide_page(req,res){
-        
-        res.render('guides')
+        console.log(__dirname)
+        res.sendFile(path.join(__dirname, '../resources/views', 'guides.html'));
     
 
     }
     // [GET] /guide/api
     async guide_data(req,res){
-        const data = await Guide.find()
-
-    
-        res.json(data)
+        try {
+            // Filter guides where guide_title is not equal to "Guide Title"
+            const data = await Guide.find({ guide_title: { $ne: "Guide Title" } });
+            
+            res.json(data);
+        } catch (error) {
+            // Handle any errors that occur during the query
+            console.error("Error fetching guide data:", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
 
     }
    
@@ -60,44 +67,43 @@ class GuildController{
 
 
     async guide_create(req,res){
-        const blogId = "65d70134118d62ab8dc0bf0e"
-        const guide = await Guide.findOne({ blog_id: blogId });
-        // Query to find the blog by ID and populate the 'steps' field
-        const blog = await Blog.findById(blogId, '-user_id');
-
-        const blog_information = await Blog.findById(blogId, '-user_id -steps -summary_comments');
-
-        if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        // Extract information from the populated 'steps' field
-        const stepsData = await Promise.all(blog.steps.map(async (step) => {
-            // Query the 'steps' collection for each step ID to get additional information
-            const detailedStep = await Step.findById(step._id);
-
-            if (detailedStep) {
-                // Extract the information you want from each detailed step
-                return {
-                    stepId: detailedStep._id,
-                    step_number: detailedStep.step_number,
-                    step_imgs: detailedStep.imgs,
-                    step_content: detailedStep.step_content,
-
-                    // Add other fields you want from each detailed step
-                };
-            }
-
-            return null; // Handle the case where detailed step is not found
-        }));
-        const sortedStepsData = stepsData.sort((a, b) => a.step_number - b.step_number);
-        // Query the 'steps' collection for the primary step using stepId
-
-        // Construct the response JSON
+        const newBlog = new Blog({
+            blog_title: "Blog Title",
+            last_updated: new Date("2024-02-22T07:41:35.414Z"),
+            conclusion: "<p>Conclusion</p>",
+            difficulty: "Easy",
+            introduction: "<p>Introduction</p>",
+            summary_comments: [],
+            time: 68,
+            steps: [],
+            user_id: "658e8240bcdfd9edfeeabd2e", // Assuming this is a valid user ID
+            number_of_comments: 0,
+            number_access: 0,
+            number_of_likes: 0,
+            number_of_completed: 0
+        });
+        
+        // Save the blog document to the database
+        const savedBlog = await newBlog.save();
+        
+        // Create a new guide document
+        const newGuide = new Guide({
+            guide_title: "Guide Title",
+            img_url: "https://guide-images.cdn.ifixit.com/igi/qZEfWObqRESuGwM4.large",
+            blog_id: savedBlog._id, // Use the ID of the newly created blog
+            user_id: "658e8240bcdfd9edfeeabd2e" // Assuming this is a valid user ID
+        });
+        
+        // Save the guide document to the database
+        const savedGuide = await newGuide.save();
+        
+    
+        const retrievedBlog = await Blog.findById(savedBlog._id);
+        const retrievedGuide = await Guide.findById(savedGuide._id);
+        
+       
         const responseData = {
-            guide_information: guide,
-            blog_information: blog_information, // Include blog information
-            steps: sortedStepsData, // Remove null entries
+            blogId: savedBlog._id
         };
         console.log('reach guide create data')
         res.json(responseData);

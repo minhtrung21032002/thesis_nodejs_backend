@@ -36,7 +36,7 @@ router.use('/blog', blogRouter)
 
 
 
-router.get('/create', guideController.guide_create)
+router.post('/create', guideController.guide_create)
 
 router.post('/store', upload.single('image'), guideController.guide_store)
 router.use('/', guideController.guide)

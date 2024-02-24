@@ -30,7 +30,7 @@ router.post('/comment/summary/:blog_id/:user_id', blogController.summary_comment
 router.post('/comment/step/:step_id/:user_id', blogController.step_comment)
 
 // Blog Page
-router.get('/:blog_id', blogController.blog_page)
+router.get('/id=:blog_id', blogController.blog_page)
 router.get('/api/:blog_id', blogController.blog_data)
 
 //Conclusion
